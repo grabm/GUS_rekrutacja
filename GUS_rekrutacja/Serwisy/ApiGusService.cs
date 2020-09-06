@@ -4,31 +4,32 @@ using System.Net;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace GUS_rekrutacja.Services
+namespace GUS_rekrutacja.Serwisy
 {
     public class ApiGusService
     {
         public string CallWebService()
         {
             var _url = "https://wyszukiwarkaregontest.stat.gov.pl/wsBIR/UslugaBIRzewnPubl.svc";
-            var _action = "https://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/Zaloguj";
+            var _akcja = "https://CIS/BIR/PUBL/2014/07/IUslugaBIRzewnPubl/Zaloguj";
 
-            XmlDocument soapEnvelopeXml = CreateXML();
-            HttpWebRequest webRequest = CreateWebRequest(_url, _action);
-            InsertSoapEnvelopeIntoWebRequest(soapEnvelopeXml, webRequest);
+            XmlDocument soapEnvelopeXml = TworzXML();
+            HttpWebRequest webZadanie = UtworzZadanieWeb(_url, _akcja);
+            DodajSoapEnvelopeDoZadaniaWeb(soapEnvelopeXml, webZadanie);
 
-            IAsyncResult asyncResult = webRequest.BeginGetResponse(null, null);
+            IAsyncResult asyncRezultat = webZadanie.BeginGetResponse(null, null);
 
-            var request = asyncResult.AsyncWaitHandle.WaitOne();
+            var request = asyncRezultat.AsyncWaitHandle.WaitOne();
 
-            string soapResult = "";
-            using (WebResponse webResponse = webRequest.EndGetResponse(asyncResult))
+            string soapRezultat = "";
+
+            using (WebResponse webResponse = webZadanie.EndGetResponse(asyncRezultat))
             {
                 using (StreamReader rd = new StreamReader(webResponse.GetResponseStream()))
                 {
-                    soapResult = rd.ReadToEnd();
+                    soapRezultat = rd.ReadToEnd();
                 }
-                Console.Write(soapResult);
+                Console.Write(soapRezultat);
             }
 
             return null;
@@ -36,25 +37,26 @@ namespace GUS_rekrutacja.Services
 
 
 
-        private HttpWebRequest CreateWebRequest(string url, string action)
+        private HttpWebRequest UtworzZadanieWeb(string url, string action)
         {
-            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(url);
-            webRequest.Headers.Add("SOAPAction", action);
-            webRequest.Accept = "text/xml";
-            webRequest.ContentType = "application/x-www-form-urlencoded";
-            webRequest.Method = "POST";
-            return webRequest;
+            HttpWebRequest webZadanie = (HttpWebRequest)WebRequest.Create(url);
+            webZadanie.Headers.Add("SOAPAction", action);
+            webZadanie.Accept = "text/xml";
+            webZadanie.ContentType = "application/x-www-form-urlencoded";
+            webZadanie.Method = "POST";
+
+            return webZadanie;
         }
 
-        private void InsertSoapEnvelopeIntoWebRequest(XmlDocument soapEnvelopeXml, HttpWebRequest webRequest)
+        private void DodajSoapEnvelopeDoZadaniaWeb(XmlDocument soapEnvelopeXml, HttpWebRequest zadanieWeb)
         {
-            using (Stream stream = webRequest.GetRequestStream())
+            using (Stream stream = zadanieWeb.GetRequestStream())
             {
                 soapEnvelopeXml.Save(stream);
             }
         }
 
-        private XmlDocument CreateXML()
+        private XmlDocument TworzXML()
         {
             XNamespace soap = "http://www.w3.org/2003/05/soap-envelope";
             XNamespace ns = "http://CIS/BIR/PUBL/2014/07";
