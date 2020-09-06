@@ -1,4 +1,4 @@
-﻿using GUS_rekrutacja.Services;
+﻿using GUS_rekrutacja.Serwisy;
 using System;
 
 namespace GUS_rekrutacja
